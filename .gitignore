@@ -12,3 +12,8 @@
 
 # Project-local glide cache, RE: https://github.com/Masterminds/glide/issues/736
 .glide/
+
+# Other folders
+vendor/
+linux_amd64/
+darwin_amd64/
