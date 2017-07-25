@@ -74,3 +74,10 @@ nginx-plus-stats-urls |    yes   |    yes   | -              | An array of Nginx
 
 ## What's exported?
 It exports statistics of standart Nginx module (https://nginx.org/en/docs/http/ngx_http_stub_status_module.html) and Nginx Plus module (http://nginx.org/en/docs/http/ngx_http_status_module.html).
+
+### Handling different value types
+
+Note, that some fields of nginx statistics have bool or strings type of values. Therefore there use the following algorithm of converting such fields into *float64*:
+
+ - The **bool** value: the value *false* is converted to *float64(1)*, the value *true* is converted to *float64(0)*.
+ - The **string** value "up", "down": the value "up" is converted to *float(1)*, the value "down" is converted to *float(0)*.
