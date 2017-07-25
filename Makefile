@@ -32,7 +32,6 @@ test:
 docker: Dockerfile
 	@echo ">> building docker image prom-nginx-exporter:$(GIT_SUMMARY)"
 	@docker build -t prom-nginx-exporter:$(GIT_SUMMARY) .
-	@docker run -d prom-nginx-exporter:$(GIT_SUMMARY)
 
 install: build
 	install -m 0755 -d $(DESTDIR)$(PREFIX)/bin

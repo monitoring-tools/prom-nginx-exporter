@@ -1,8 +1,8 @@
-# Nginx Plus Exporter
+# Prom Nginx Exporter
 
-Nginx Plus stats exporter for Prometheus.
+`Prom Nginx Exporter` is nginx statistics exporter for Prometheus.
 
-The Nginx Plus Exporter requests the nginx or nginx plus stats from specified endpoints and exposes them for Prometheus consumption.
+The `Prom Nginx Exporter` requests the nginx or nginx plus stats from specified endpoints and exposes them for Prometheus consumption.
 
 ## Building and running
 

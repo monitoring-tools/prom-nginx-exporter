@@ -17,3 +17,4 @@
 vendor/
 linux_amd64/
 darwin_amd64/
+.idea
