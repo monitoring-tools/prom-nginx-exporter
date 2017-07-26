@@ -185,7 +185,7 @@ func (exp *nginxPlusExporter) scrapeURL(module string, addr *url.URL, metrics ch
 	contentType := strings.Split(resp.Header.Get("Content-Type"), ";")[0]
 
 	if module == nginxModule {
-		exp.nginxScraper.Scrape(resp.Body, metrics, labels)
+		err = exp.nginxScraper.Scrape(resp.Body, metrics, labels)
 		if err != nil {
 			return fmt.Errorf("Error scraping nginx stats using address '%s': %s", addr.String(), err)
 		}
