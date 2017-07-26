@@ -7,7 +7,7 @@ import (
 	"io"
 	"strconv"
 
-	"prom-nginx-exporter/metric"
+	"github.com/monitoring-tools/prom-nginx-exporter/metric"
 )
 
 // NginxPlusScraper is scraper for getting nginx plus metrics

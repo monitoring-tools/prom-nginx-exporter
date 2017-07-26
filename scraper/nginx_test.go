@@ -4,10 +4,9 @@ import (
 	"strings"
 	"testing"
 
-	"prom-nginx-exporter/common"
-	"prom-nginx-exporter/metric"
-	"prom-nginx-exporter/scraper"
-
+	"github.com/monitoring-tools/prom-nginx-exporter/common"
+	"github.com/monitoring-tools/prom-nginx-exporter/metric"
+	"github.com/monitoring-tools/prom-nginx-exporter/scraper"
 	. "gopkg.in/check.v1"
 )
 

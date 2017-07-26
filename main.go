@@ -8,10 +8,9 @@ import (
 	"os"
 	"time"
 
-	"prom-nginx-exporter/common"
-	"prom-nginx-exporter/exporter"
-	"prom-nginx-exporter/scraper"
-
+	"github.com/monitoring-tools/prom-nginx-exporter/common"
+	"github.com/monitoring-tools/prom-nginx-exporter/exporter"
+	"github.com/monitoring-tools/prom-nginx-exporter/scraper"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/prometheus/common/log"
