@@ -31,6 +31,7 @@ func (scr *NginxPlusScraper) Scrape(body io.Reader, metrics chan<- metric.Metric
 	scr.scrapeConnections(status, metrics, labels)
 	scr.scrapeSsl(status, metrics, labels)
 	scr.scrapeRequest(status, metrics, labels)
+	scr.scrapeZone(status, metrics, labels)
 	scr.scrapeUpstream(status, metrics, labels)
 	scr.scrapeCache(status, metrics, labels)
 	scr.scrapeStream(status, metrics, labels)
@@ -58,8 +59,13 @@ func (scr *NginxPlusScraper) scrapeSsl(status *Status, metrics chan<- metric.Met
 	metrics <- metric.NewMetric("ssl_session_reuses", status.Ssl.SessionReuses, labels)
 }
 
-// scrapeRequest scrapes request metrics
 func (scr *NginxPlusScraper) scrapeRequest(status *Status, metrics chan<- metric.Metric, labels map[string]string) {
+	metrics <- metric.NewMetric("requests_total", status.Requests.Total, labels)
+	metrics <- metric.NewMetric("requests_current", status.Requests.Current, labels)
+}
+
+// scrapeZone scrapes request metrics
+func (scr *NginxPlusScraper) scrapeZone(status *Status, metrics chan<- metric.Metric, labels map[string]string) {
 	for zoneName, zone := range status.ServerZones {
 		zoneLabels := make(map[string]string)
 		for k, v := range labels {
