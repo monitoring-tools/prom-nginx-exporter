@@ -67,8 +67,8 @@ func parseFlag() (*common.Config, error) {
 		os.Exit(0)
 	}
 
-	if len(nginxUrls) == 0 {
-		return nil, errors.New("no nginx stats url specified")
+	if len(nginxUrls) == 0 && len(nginxPlusUrls) == 0 {
+		return nil, errors.New("no nginx or nginx plus stats url specified")
 	}
 
 	return common.NewConfig(*listenAddress, *metricsPath, *namespace, nginxUrls, nginxPlusUrls), nil
