@@ -5,7 +5,6 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/monitoring-tools/prom-nginx-exporter/common"
@@ -35,8 +34,6 @@ type nginxPlusExporter struct {
 	duration     prometheus.Summary
 	totalScrapes prometheus.Counter
 	metrics      map[string]*prometheus.GaugeVec
-
-	sync.RWMutex
 }
 
 // NewNginxPlusExporter creates nginx and nginx plus stats exporter
@@ -86,9 +83,6 @@ func (exp *nginxPlusExporter) Describe(ch chan<- *prometheus.Desc) {
 
 // Collect collects nginx and nginx plus metrics
 func (exp *nginxPlusExporter) Collect(ch chan<- prometheus.Metric) {
-	exp.Lock()
-	defer exp.Unlock()
-
 	exp.save(exp.scrape())
 	exp.expose(ch)
 }
