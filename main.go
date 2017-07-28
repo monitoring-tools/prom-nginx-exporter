@@ -23,10 +23,10 @@ var (
 var (
 	landingPage = `<html>
 <head>
-<title>Ngins Plus exporter</title>
+<title>Prom Nginx exporter</title>
 </head>
 <body>
-<h1>Ngins Plus exporter</h1>
+<h1>Prom Nginx exporter</h1>
 <p><a href="/metrics">Metrics</a></p>
 </body>
 </html>`

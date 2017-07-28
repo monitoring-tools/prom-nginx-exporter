@@ -49,16 +49,14 @@ func ConvertValueToFloat64(value interface{}) (float64, error) {
 
 		resultValue = val
 	case bool:
+		resultValue = float64(0)
 		if val == true {
 			resultValue = float64(1)
-		} else {
-			resultValue = float64(0)
 		}
 	case string:
+		resultValue = float64(0)
 		if strings.ToLower(val) == "up" {
 			resultValue = float64(1)
-		} else {
-			resultValue = float64(0)
 		}
 	default:
 		return float64(0), fmt.Errorf("Unable to convert metric value: invalid type, type: '%v'", val)

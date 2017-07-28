@@ -195,7 +195,7 @@ func (s NginxPlusScraperSuite) TestScrape_Success(c *C) {
 	nginxPlusScraper := scraper.NewNginxPlusScraper()
 	reader := strings.NewReader(validNginxPlusStats)
 
-	metrics := make(chan metric.Metric, 96)
+	metrics := make(chan metric.Metric, 98)
 	labels := map[string]string{
 		"host": "zone.a_80",
 		"port": "8080",
@@ -242,6 +242,16 @@ func (s NginxPlusScraperSuite) TestScrape_Success(c *C) {
 	m = <-metrics
 	c.Assert(m.Name, Equals, "ssl_session_reuses", Commentf("incorrect metrics name of 'ssl_session_reuses' field"))
 	c.Assert(m.Value, Equals, int64(6543210000000), Commentf("incorrect value of metric 'ssl_session_reuses'"))
+	c.Assert(m.Labels, DeepEquals, labels, Commentf("incorrect set of labels"))
+
+	m = <-metrics
+	c.Assert(m.Name, Equals, "requests_total", Commentf("incorrect metrics name of 'requests_total' field"))
+	c.Assert(m.Value, Equals, int64(9876543210000), Commentf("incorrect value of metric 'requests_total'"))
+	c.Assert(m.Labels, DeepEquals, labels, Commentf("incorrect set of labels"))
+
+	m = <-metrics
+	c.Assert(m.Name, Equals, "requests_current", Commentf("incorrect metrics name of 'requests_current' field"))
+	c.Assert(m.Value, Equals, int(98), Commentf("incorrect value of metric 'requests_current'"))
 	c.Assert(m.Labels, DeepEquals, labels, Commentf("incorrect set of labels"))
 
 	zoneLabels := make(map[string]string)
