@@ -33,20 +33,10 @@ func ConvertValueToFloat64(value interface{}) (float64, error) {
 	case int64:
 		resultValue = float64(int64(val))
 	case uint64:
-		// InfluxDB does not support writing uint64
-		if val < uint64(9223372036854775808) {
-			resultValue = float64(int64(val))
-		} else {
-			resultValue = float64(9223372036854775807)
-		}
+		resultValue = float64(int64(val))
 	case float32:
 		resultValue = float64(val)
 	case float64:
-		// NaNs are invalid values in influxdb, skip measurement
-		if math.IsNaN(val) || math.IsInf(val, 0) {
-			return float64(0), errors.New("Unable to convert metric value: value is a Nan or Inf")
-		}
-
 		resultValue = val
 	case bool:
 		resultValue = float64(0)
