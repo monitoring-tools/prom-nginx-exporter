@@ -115,6 +115,7 @@ func (scr *NginxPlusScraper) scrapeUpstream(status *Status, metrics chan<- metri
 				peerLabels[k] = v
 			}
 			peerLabels["serverAddress"] = peer.Server
+			peerLabels["serverName"] = peer.Name
 			if peer.ID != nil {
 				peerLabels["id"] = strconv.Itoa(*peer.ID)
 			}
@@ -225,6 +226,7 @@ func (scr *NginxPlusScraper) scrapeStream(status *Status, metrics chan<- metric.
 				peerLables[k] = v
 			}
 			peerLables["serverAddress"] = peer.Server
+			peerLables["serverName"] = peer.Name
 			peerLables["id"] = strconv.Itoa(peer.ID)
 
 			metrics <- metric.NewMetric("stream_upstream_peer_backup", peer.Backup, peerLables)
@@ -345,6 +347,7 @@ type Upstreams map[string]struct {
 	Peers []struct {
 		ID        *int   `json:"id"` // added in version 3
 		Server    string `json:"server"`
+		Name      string `json:"name"`
 		Backup    bool   `json:"backup"`
 		Weight    int    `json:"weight"`
 		State     string `json:"state"`
@@ -455,6 +458,7 @@ type Stream struct {
 		Peers []struct {
 			ID            int    `json:"id"`
 			Server        string `json:"server"`
+			Name          string `json:"name"`
 			Backup        bool   `json:"backup"`
 			Weight        int    `json:"weight"`
 			State         string `json:"state"`

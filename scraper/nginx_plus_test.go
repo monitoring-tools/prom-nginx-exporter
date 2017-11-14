@@ -70,6 +70,7 @@ var validNginxPlusStats = `
                 {
                     "id": 0,
                     "server": "1.2.3.123:80",
+                    "name": "app01:80",
                     "backup": false,
                     "weight": 1,
                     "state": "up",
@@ -161,6 +162,7 @@ var validNginxPlusStats = `
                     {
                         "id": 1,
                         "server": "5.4.3.2:2345",
+                        "name": "app01:22",
                         "backup": false,
                         "weight": 1,
                         "state": "up",
@@ -352,6 +354,7 @@ func (s NginxPlusScraperSuite) TestScrape_Success(c *C) {
 	}
 	peerLabels["id"] = "0"
 	peerLabels["serverAddress"] = "1.2.3.123:80"
+	peerLabels["serverName"] = "app01:80"
 
 	m = <-metrics
 	c.Assert(m.Name, Equals, "upstream_peer_backup", Commentf("incorrect metrics name of 'upstream_peer_backup' field"))
@@ -641,6 +644,7 @@ func (s NginxPlusScraperSuite) TestScrape_Success(c *C) {
 		streamPeerLabels[l] = v
 	}
 	streamPeerLabels["serverAddress"] = "5.4.3.2:2345"
+	streamPeerLabels["serverName"] = "app01:22"
 	streamPeerLabels["id"] = "1"
 
 	m = <-metrics
