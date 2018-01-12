@@ -13,6 +13,9 @@ fmt:
 	@ret=0 && for d in $$($(GO) list -f '{{.Dir}}' ./... | grep -v /vendor/); do \
 		$(GO) fmt $$d/*.go || ret=$$? ; \
 		done ; exit $$ret
+test: vendor
+	@echo ">> running tests"
+	@$(GO) test $(shell $(GO) list ./... | grep -v /vendor/)
 
 vet: vendor
 	@echo ">> vetting code"
