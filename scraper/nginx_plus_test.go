@@ -191,11 +191,21 @@ var validNginxPlusStats = `
 }
 `
 
+// codeLabels takes a label map and adds the specified "code" label.
+func codeLabels(labels map[string]string, code string) map[string]string {
+	out := make(map[string]string)
+	for k, v := range labels {
+		out[k] = v
+	}
+	out["code"] = code
+	return out
+}
+
 func (s NginxPlusScraperSuite) TestScrape_Success(c *C) {
 	nginxPlusScraper := scraper.NewNginxPlusScraper()
 	reader := strings.NewReader(validNginxPlusStats)
 
-	metrics := make(chan metric.Metric, 98)
+	metrics := make(chan metric.Metric, 108)
 	labels := map[string]string{
 		"host": "zone.a_80",
 		"port": "8080",
@@ -271,9 +281,29 @@ func (s NginxPlusScraperSuite) TestScrape_Success(c *C) {
 	c.Assert(m.Labels, DeepEquals, zoneLabels, Commentf("incorrect set of labels"))
 
 	m = <-metrics
+	c.Assert(m.Name, Equals, "zone_received", Commentf("incorrect metrics name of 'zone_received' field"))
+	c.Assert(m.Value, Equals, int64(22), Commentf("incorrect value of metric 'zone_received'"))
+	c.Assert(m.Labels, DeepEquals, zoneLabels, Commentf("incorrect set of labels"))
+
+	m = <-metrics
+	c.Assert(m.Name, Equals, "zone_sent", Commentf("incorrect metrics name of 'zone_sent' field"))
+	c.Assert(m.Value, Equals, int64(33), Commentf("incorrect value of metric 'zone_sent'"))
+	c.Assert(m.Labels, DeepEquals, zoneLabels, Commentf("incorrect set of labels"))
+
+	m = <-metrics
+	c.Assert(m.Name, Equals, "zone_responses", Commentf("incorrect metrics name of 'zone_responses' field"))
+	c.Assert(m.Value, Equals, int64(111), Commentf("incorrect value of metric 'zone_responses'"))
+	c.Assert(m.Labels, DeepEquals, codeLabels(zoneLabels, "1xx"), Commentf("incorrect set of labels")) // 1xx
+
+	m = <-metrics
 	c.Assert(m.Name, Equals, "zone_responses_1xx", Commentf("incorrect metrics name of 'zone_responses_1xx' field"))
 	c.Assert(m.Value, Equals, int64(111), Commentf("incorrect value of metric 'zone_responses_1xx'"))
 	c.Assert(m.Labels, DeepEquals, zoneLabels, Commentf("incorrect set of labels"))
+
+	m = <-metrics
+	c.Assert(m.Name, Equals, "zone_responses", Commentf("incorrect metrics name of 'zone_responses' field"))
+	c.Assert(m.Value, Equals, int64(222), Commentf("incorrect value of metric 'zone_responses'"))
+	c.Assert(m.Labels, DeepEquals, codeLabels(zoneLabels, "2xx"), Commentf("incorrect set of labels")) // 2xx
 
 	m = <-metrics
 	c.Assert(m.Name, Equals, "zone_responses_2xx", Commentf("incorrect metrics name of 'zone_responses_2xx' field"))
@@ -281,14 +311,29 @@ func (s NginxPlusScraperSuite) TestScrape_Success(c *C) {
 	c.Assert(m.Labels, DeepEquals, zoneLabels, Commentf("incorrect set of labels"))
 
 	m = <-metrics
+	c.Assert(m.Name, Equals, "zone_responses", Commentf("incorrect metrics name of 'zone_responses' field"))
+	c.Assert(m.Value, Equals, int64(333), Commentf("incorrect value of metric 'zone_responses'"))
+	c.Assert(m.Labels, DeepEquals, codeLabels(zoneLabels, "3xx"), Commentf("incorrect set of labels")) // 3xx
+
+	m = <-metrics
 	c.Assert(m.Name, Equals, "zone_responses_3xx", Commentf("incorrect metrics name of 'zone_responses_3xx' field"))
 	c.Assert(m.Value, Equals, int64(333), Commentf("incorrect value of metric 'zone_responses_3xx'"))
 	c.Assert(m.Labels, DeepEquals, zoneLabels, Commentf("incorrect set of labels"))
 
 	m = <-metrics
+	c.Assert(m.Name, Equals, "zone_responses", Commentf("incorrect metrics name of 'zone_responses' field"))
+	c.Assert(m.Value, Equals, int64(444), Commentf("incorrect value of metric 'zone_responses'"))
+	c.Assert(m.Labels, DeepEquals, codeLabels(zoneLabels, "4xx"), Commentf("incorrect set of labels")) // 4xx
+
+	m = <-metrics
 	c.Assert(m.Name, Equals, "zone_responses_4xx", Commentf("incorrect metrics name of 'zone_responses_4xx' field"))
 	c.Assert(m.Value, Equals, int64(444), Commentf("incorrect value of metric 'zone_responses_4xx'"))
 	c.Assert(m.Labels, DeepEquals, zoneLabels, Commentf("incorrect set of labels"))
+
+	m = <-metrics
+	c.Assert(m.Name, Equals, "zone_responses", Commentf("incorrect metrics name of 'zone_responses' field"))
+	c.Assert(m.Value, Equals, int64(555), Commentf("incorrect value of metric 'zone_responses'"))
+	c.Assert(m.Labels, DeepEquals, codeLabels(zoneLabels, "5xx"), Commentf("incorrect set of labels")) // 5xx
 
 	m = <-metrics
 	c.Assert(m.Name, Equals, "zone_responses_5xx", Commentf("incorrect metrics name of 'zone_responses_5xx' field"))
@@ -301,53 +346,43 @@ func (s NginxPlusScraperSuite) TestScrape_Success(c *C) {
 	c.Assert(m.Labels, DeepEquals, zoneLabels, Commentf("incorrect set of labels"))
 
 	m = <-metrics
-	c.Assert(m.Name, Equals, "zone_received", Commentf("incorrect metrics name of 'zone_received' field"))
-	c.Assert(m.Value, Equals, int64(22), Commentf("incorrect value of metric 'zone_received'"))
-	c.Assert(m.Labels, DeepEquals, zoneLabels, Commentf("incorrect set of labels"))
-
-	m = <-metrics
-	c.Assert(m.Name, Equals, "zone_sent", Commentf("incorrect metrics name of 'zone_sent' field"))
-	c.Assert(m.Value, Equals, int64(33), Commentf("incorrect value of metric 'zone_sent'"))
-	c.Assert(m.Labels, DeepEquals, zoneLabels, Commentf("incorrect set of labels"))
-
-	m = <-metrics
 	c.Assert(m.Name, Equals, "zone_discarded", Commentf("incorrect metrics name of 'zone_discarded' field"))
 	c.Assert(m.Value, Equals, int64(11), Commentf("incorrect value of metric 'zone_discarded'"))
 	c.Assert(m.Labels, DeepEquals, zoneLabels, Commentf("incorrect set of labels"))
 
-	upstramLabels := make(map[string]string)
+	upstreamLabels := make(map[string]string)
 	for l, v := range labels {
-		upstramLabels[l] = v
+		upstreamLabels[l] = v
 	}
-	upstramLabels["upstream"] = "first_upstream"
+	upstreamLabels["upstream"] = "first_upstream"
 
 	m = <-metrics
 	c.Assert(m.Name, Equals, "upstream_keepalive", Commentf("incorrect metrics name of 'upstream_keepalive' field"))
 	c.Assert(m.Value, Equals, 1, Commentf("incorrect value of metric 'upstream_keepalive'"))
-	c.Assert(m.Labels, DeepEquals, upstramLabels, Commentf("incorrect set of labels"))
+	c.Assert(m.Labels, DeepEquals, upstreamLabels, Commentf("incorrect set of labels"))
 
 	m = <-metrics
 	c.Assert(m.Name, Equals, "upstream_zombies", Commentf("incorrect metrics name of 'upstream_zombies' field"))
 	c.Assert(m.Value, Equals, 2, Commentf("incorrect value of metric 'upstream_zombies'"))
-	c.Assert(m.Labels, DeepEquals, upstramLabels, Commentf("incorrect set of labels"))
+	c.Assert(m.Labels, DeepEquals, upstreamLabels, Commentf("incorrect set of labels"))
 
 	m = <-metrics
 	c.Assert(m.Name, Equals, "upstream_queue_size", Commentf("incorrect metrics name of 'upstream_queue_size' field"))
 	c.Assert(m.Value, Equals, 100, Commentf("incorrect value of metric 'upstream_queue_size'"))
-	c.Assert(m.Labels, DeepEquals, upstramLabels, Commentf("incorrect set of labels"))
+	c.Assert(m.Labels, DeepEquals, upstreamLabels, Commentf("incorrect set of labels"))
 
 	m = <-metrics
 	c.Assert(m.Name, Equals, "upstream_queue_max_size", Commentf("incorrect metrics name of 'upstream_queue_max_size' field"))
 	c.Assert(m.Value, Equals, 1000, Commentf("incorrect value of metric 'upstream_queue_max_size'"))
-	c.Assert(m.Labels, DeepEquals, upstramLabels, Commentf("incorrect set of labels"))
+	c.Assert(m.Labels, DeepEquals, upstreamLabels, Commentf("incorrect set of labels"))
 
 	m = <-metrics
 	c.Assert(m.Name, Equals, "upstream_queue_overflows", Commentf("incorrect metrics name of 'upstream_queue_overflows' field"))
 	c.Assert(m.Value, Equals, int64(12), Commentf("incorrect value of metric 'upstream_queue_overflows'"))
-	c.Assert(m.Labels, DeepEquals, upstramLabels, Commentf("incorrect set of labels"))
+	c.Assert(m.Labels, DeepEquals, upstreamLabels, Commentf("incorrect set of labels"))
 
 	peerLabels := make(map[string]string)
-	for l, v := range upstramLabels {
+	for l, v := range upstreamLabels {
 		peerLabels[l] = v
 	}
 	peerLabels["id"] = "0"
@@ -376,36 +411,6 @@ func (s NginxPlusScraperSuite) TestScrape_Success(c *C) {
 	m = <-metrics
 	c.Assert(m.Name, Equals, "upstream_peer_requests", Commentf("incorrect metrics name of 'upstream_peer_requests' field"))
 	c.Assert(m.Value, Equals, int64(9876), Commentf("incorrect value of metric 'upstream_peer_requests'"))
-	c.Assert(m.Labels, DeepEquals, peerLabels, Commentf("incorrect set of labels"))
-
-	m = <-metrics
-	c.Assert(m.Name, Equals, "upstream_peer_responses_1xx", Commentf("incorrect metrics name of 'upstream_peer_responses_1xx' field"))
-	c.Assert(m.Value, Equals, int64(1111), Commentf("incorrect value of metric 'upstream_peer_responses_1xx'"))
-	c.Assert(m.Labels, DeepEquals, peerLabels, Commentf("incorrect set of labels"))
-
-	m = <-metrics
-	c.Assert(m.Name, Equals, "upstream_peer_responses_2xx", Commentf("incorrect metrics name of 'upstream_peer_responses_2xx' field"))
-	c.Assert(m.Value, Equals, int64(2222), Commentf("incorrect value of metric 'upstream_peer_responses_2xx'"))
-	c.Assert(m.Labels, DeepEquals, peerLabels, Commentf("incorrect set of labels"))
-
-	m = <-metrics
-	c.Assert(m.Name, Equals, "upstream_peer_responses_3xx", Commentf("incorrect metrics name of 'upstream_peer_responses_3xx' field"))
-	c.Assert(m.Value, Equals, int64(3333), Commentf("incorrect value of metric 'upstream_peer_responses_3xx'"))
-	c.Assert(m.Labels, DeepEquals, peerLabels, Commentf("incorrect set of labels"))
-
-	m = <-metrics
-	c.Assert(m.Name, Equals, "upstream_peer_responses_4xx", Commentf("incorrect metrics name of 'upstream_peer_responses_4xx' field"))
-	c.Assert(m.Value, Equals, int64(4444), Commentf("incorrect value of metric 'upstream_peer_responses_4xx'"))
-	c.Assert(m.Labels, DeepEquals, peerLabels, Commentf("incorrect set of labels"))
-
-	m = <-metrics
-	c.Assert(m.Name, Equals, "upstream_peer_responses_5xx", Commentf("incorrect metrics name of 'upstream_peer_responses_5xx' field"))
-	c.Assert(m.Value, Equals, int64(5555), Commentf("incorrect value of metric 'upstream_peer_responses_5xx'"))
-	c.Assert(m.Labels, DeepEquals, peerLabels, Commentf("incorrect set of labels"))
-
-	m = <-metrics
-	c.Assert(m.Name, Equals, "upstream_peer_responses_total", Commentf("incorrect metrics name of 'upstream_peer_responses_total' field"))
-	c.Assert(m.Value, Equals, int64(987654), Commentf("incorrect value of metric 'upstream_peer_responses_total'"))
 	c.Assert(m.Labels, DeepEquals, peerLabels, Commentf("incorrect set of labels"))
 
 	m = <-metrics
@@ -456,6 +461,61 @@ func (s NginxPlusScraperSuite) TestScrape_Success(c *C) {
 	m = <-metrics
 	c.Assert(m.Name, Equals, "upstream_peer_selected", Commentf("incorrect metrics name of 'upstream_peer_selected' field"))
 	c.Assert(m.Value, Equals, int64(1451606400000), Commentf("incorrect value of metric 'upstream_peer_selected'"))
+	c.Assert(m.Labels, DeepEquals, peerLabels, Commentf("incorrect set of labels"))
+
+	m = <-metrics
+	c.Assert(m.Name, Equals, "upstream_peer_responses", Commentf("incorrect metrics name of 'upstream_peer_responses' field"))
+	c.Assert(m.Value, Equals, int64(1111), Commentf("incorrect value of metric 'upstream_peer_responses'"))
+	c.Assert(m.Labels, DeepEquals, codeLabels(peerLabels, "1xx"), Commentf("incorrect set of labels")) // 1xx
+
+	m = <-metrics
+	c.Assert(m.Name, Equals, "upstream_peer_responses_1xx", Commentf("incorrect metrics name of 'upstream_peer_responses_1xx' field"))
+	c.Assert(m.Value, Equals, int64(1111), Commentf("incorrect value of metric 'upstream_peer_responses_1xx'"))
+	c.Assert(m.Labels, DeepEquals, peerLabels, Commentf("incorrect set of labels"))
+
+	m = <-metrics
+	c.Assert(m.Name, Equals, "upstream_peer_responses", Commentf("incorrect metrics name of 'upstream_peer_responses' field"))
+	c.Assert(m.Value, Equals, int64(2222), Commentf("incorrect value of metric 'upstream_peer_responses'"))
+	c.Assert(m.Labels, DeepEquals, codeLabels(peerLabels, "2xx"), Commentf("incorrect set of labels")) // 2xx
+
+	m = <-metrics
+	c.Assert(m.Name, Equals, "upstream_peer_responses_2xx", Commentf("incorrect metrics name of 'upstream_peer_responses_2xx' field"))
+	c.Assert(m.Value, Equals, int64(2222), Commentf("incorrect value of metric 'upstream_peer_responses_2xx'"))
+	c.Assert(m.Labels, DeepEquals, peerLabels, Commentf("incorrect set of labels"))
+
+	m = <-metrics
+	c.Assert(m.Name, Equals, "upstream_peer_responses", Commentf("incorrect metrics name of 'upstream_peer_responses' field"))
+	c.Assert(m.Value, Equals, int64(3333), Commentf("incorrect value of metric 'upstream_peer_responses'"))
+	c.Assert(m.Labels, DeepEquals, codeLabels(peerLabels, "3xx"), Commentf("incorrect set of labels")) // 3xx
+
+	m = <-metrics
+	c.Assert(m.Name, Equals, "upstream_peer_responses_3xx", Commentf("incorrect metrics name of 'upstream_peer_responses_3xx' field"))
+	c.Assert(m.Value, Equals, int64(3333), Commentf("incorrect value of metric 'upstream_peer_responses_3xx'"))
+	c.Assert(m.Labels, DeepEquals, peerLabels, Commentf("incorrect set of labels"))
+
+	m = <-metrics
+	c.Assert(m.Name, Equals, "upstream_peer_responses", Commentf("incorrect metrics name of 'upstream_peer_responses' field"))
+	c.Assert(m.Value, Equals, int64(4444), Commentf("incorrect value of metric 'upstream_peer_responses'"))
+	c.Assert(m.Labels, DeepEquals, codeLabels(peerLabels, "4xx"), Commentf("incorrect set of labels")) // 4xx
+
+	m = <-metrics
+	c.Assert(m.Name, Equals, "upstream_peer_responses_4xx", Commentf("incorrect metrics name of 'upstream_peer_responses_4xx' field"))
+	c.Assert(m.Value, Equals, int64(4444), Commentf("incorrect value of metric 'upstream_peer_responses_4xx'"))
+	c.Assert(m.Labels, DeepEquals, peerLabels, Commentf("incorrect set of labels"))
+
+	m = <-metrics
+	c.Assert(m.Name, Equals, "upstream_peer_responses", Commentf("incorrect metrics name of 'upstream_peer_responses' field"))
+	c.Assert(m.Value, Equals, int64(5555), Commentf("incorrect value of metric 'upstream_peer_responses'"))
+	c.Assert(m.Labels, DeepEquals, codeLabels(peerLabels, "5xx"), Commentf("incorrect set of labels")) // 5xx
+
+	m = <-metrics
+	c.Assert(m.Name, Equals, "upstream_peer_responses_5xx", Commentf("incorrect metrics name of 'upstream_peer_responses_5xx' field"))
+	c.Assert(m.Value, Equals, int64(5555), Commentf("incorrect value of metric 'upstream_peer_responses_5xx'"))
+	c.Assert(m.Labels, DeepEquals, peerLabels, Commentf("incorrect set of labels"))
+
+	m = <-metrics
+	c.Assert(m.Name, Equals, "upstream_peer_responses_total", Commentf("incorrect metrics name of 'upstream_peer_responses_total' field"))
+	c.Assert(m.Value, Equals, int64(987654), Commentf("incorrect value of metric 'upstream_peer_responses_total'"))
 	c.Assert(m.Labels, DeepEquals, peerLabels, Commentf("incorrect set of labels"))
 
 	m = <-metrics

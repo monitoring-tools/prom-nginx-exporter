@@ -75,14 +75,24 @@ func (scr *NginxPlusScraper) scrapeZone(status *Status, metrics chan<- metric.Me
 		zoneLabels["zone"] = zoneName
 		metrics <- metric.NewMetric("zone_processing", zone.Processing, zoneLabels)
 		metrics <- metric.NewMetric("zone_requests", zone.Requests, zoneLabels)
-		metrics <- metric.NewMetric("zone_responses_1xx", zone.Responses.Responses1xx, zoneLabels)
-		metrics <- metric.NewMetric("zone_responses_2xx", zone.Responses.Responses2xx, zoneLabels)
-		metrics <- metric.NewMetric("zone_responses_3xx", zone.Responses.Responses3xx, zoneLabels)
-		metrics <- metric.NewMetric("zone_responses_4xx", zone.Responses.Responses4xx, zoneLabels)
-		metrics <- metric.NewMetric("zone_responses_5xx", zone.Responses.Responses5xx, zoneLabels)
-		metrics <- metric.NewMetric("zone_responses_total", zone.Responses.Total, zoneLabels)
 		metrics <- metric.NewMetric("zone_received", zone.Received, zoneLabels)
 		metrics <- metric.NewMetric("zone_sent", zone.Sent, zoneLabels)
+
+		responseMetric := func(code string, count int64) {
+			codeLabels := make(map[string]string)
+			for k, v := range zoneLabels {
+				codeLabels[k] = v
+			}
+			codeLabels["code"] = code
+			metrics <- metric.NewMetric("zone_responses", count, codeLabels)
+			metrics <- metric.NewMetric("zone_responses_"+code, count, zoneLabels)
+		}
+		responseMetric("1xx", zone.Responses.Responses1xx)
+		responseMetric("2xx", zone.Responses.Responses2xx)
+		responseMetric("3xx", zone.Responses.Responses3xx)
+		responseMetric("4xx", zone.Responses.Responses4xx)
+		responseMetric("5xx", zone.Responses.Responses5xx)
+		metrics <- metric.NewMetric("zone_responses_total", zone.Responses.Total, zoneLabels)
 
 		if zone.Discarded != nil {
 			metrics <- metric.NewMetric("zone_discarded", *zone.Discarded, zoneLabels)
@@ -124,12 +134,6 @@ func (scr *NginxPlusScraper) scrapeUpstream(status *Status, metrics chan<- metri
 			metrics <- metric.NewMetric("upstream_peer_state", peer.State, peerLabels)
 			metrics <- metric.NewMetric("upstream_peer_active", peer.Active, peerLabels)
 			metrics <- metric.NewMetric("upstream_peer_requests", peer.Requests, peerLabels)
-			metrics <- metric.NewMetric("upstream_peer_responses_1xx", peer.Responses.Responses1xx, peerLabels)
-			metrics <- metric.NewMetric("upstream_peer_responses_2xx", peer.Responses.Responses2xx, peerLabels)
-			metrics <- metric.NewMetric("upstream_peer_responses_3xx", peer.Responses.Responses3xx, peerLabels)
-			metrics <- metric.NewMetric("upstream_peer_responses_4xx", peer.Responses.Responses4xx, peerLabels)
-			metrics <- metric.NewMetric("upstream_peer_responses_5xx", peer.Responses.Responses5xx, peerLabels)
-			metrics <- metric.NewMetric("upstream_peer_responses_total", peer.Responses.Total, peerLabels)
 			metrics <- metric.NewMetric("upstream_peer_sent", peer.Sent, peerLabels)
 			metrics <- metric.NewMetric("upstream_peer_received", peer.Received, peerLabels)
 			metrics <- metric.NewMetric("upstream_peer_fails", peer.Fails, peerLabels)
@@ -140,6 +144,22 @@ func (scr *NginxPlusScraper) scrapeUpstream(status *Status, metrics chan<- metri
 			metrics <- metric.NewMetric("upstream_peer_downtime", peer.Downtime, peerLabels)
 			metrics <- metric.NewMetric("upstream_peer_downstart", peer.Downstart, peerLabels)
 			metrics <- metric.NewMetric("upstream_peer_selected", *peer.Selected, peerLabels)
+
+			responseMetric := func(code string, count int64) {
+				codeLabels := make(map[string]string)
+				for k, v := range peerLabels {
+					codeLabels[k] = v
+				}
+				codeLabels["code"] = code
+				metrics <- metric.NewMetric("upstream_peer_responses", count, codeLabels)
+				metrics <- metric.NewMetric("upstream_peer_responses_"+code, count, peerLabels)
+			}
+			responseMetric("1xx", peer.Responses.Responses1xx)
+			responseMetric("2xx", peer.Responses.Responses2xx)
+			responseMetric("3xx", peer.Responses.Responses3xx)
+			responseMetric("4xx", peer.Responses.Responses4xx)
+			responseMetric("5xx", peer.Responses.Responses5xx)
+			metrics <- metric.NewMetric("upstream_peer_responses_total", peer.Responses.Total, peerLabels)
 
 			if peer.HealthChecks.LastPassed != nil {
 				metrics <- metric.NewMetric("upstream_peer_healthchecks_last_passed", *peer.HealthChecks.LastPassed, peerLabels)
