@@ -9,6 +9,7 @@ all: deps test build
 
 deps:
 	@echo ">> installing dependencies"
+	go get -u github.com/golang/dep/cmd/dep
 	dep ensure
 
 build: linux_amd64/prom-nginx-exporter
