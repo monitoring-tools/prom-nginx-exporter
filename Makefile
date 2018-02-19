@@ -9,7 +9,7 @@ all: deps test build
 
 deps:
 	@echo ">> installing dependencies"
-	glide install
+	dep ensure
 
 build: linux_amd64/prom-nginx-exporter
 
@@ -27,7 +27,7 @@ darwin_amd64/prom-nginx-exporter: deps
 
 test:
 	@echo ">> making tests"
-	@go test $$(glide nv)
+	@go test $$(go list ./... | grep -v /vendor/)
 
 docker: Dockerfile
 	@echo ">> building docker image prom-nginx-exporter:$(GIT_SUMMARY)"

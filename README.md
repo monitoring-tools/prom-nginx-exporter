@@ -11,7 +11,7 @@ For linux:
 ```
 $ make build-linux
  >> installing dependencies                                                                                                                                                            │
- glide install
+ dep init
  ...
 $ ./linux_amd64/nginx-plus-exporter listen-address="localhost:9005" --metrics-path="/metrics" --namespace="nginxplus" --nginx-stats-urls="localhost:9002/status" --nginx-stats-urls="localhost:9003/status" --nginx-plus-stats-urls="localhost:9004/status"
 ```
@@ -21,7 +21,7 @@ For darwin:
 ```
 $ make build-darwin
  >> installing dependencies                                                                                                                                                            │
- glide install
+ dep init
  ...
 $ ./darwin_amd64/nginx-plus-exporter listen-address="localhost:9005" --metrics-path="/metrics" --namespace="nginxplus" --nginx-stats-urls="localhost:9002/status" --nginx-stats-urls="localhost:9003/status" --nginx-plus-stats-urls="localhost:9004/status"
 ```
