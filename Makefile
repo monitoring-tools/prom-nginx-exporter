@@ -1,15 +1,16 @@
 DESTDIR ?=
 PREFIX ?= /usr/local
 
-GIT_SUMMARY := $(shell git describe --tags --always 2>/dev/null)
-
-CURRENT_GOPATH:=$(lastword $(subst :, ,$(GOPATH)))
+GO              = go
+GIT_SUMMARY		:= $(shell git describe --tags --always 2>/dev/null)
+CURRENT_GOPATH	:=$(lastword $(subst :, ,$(GOPATH)))
+DEP_BIN			:= $(GOPATH)/bin/dep
 
 all: deps test build
 
-deps:
-	@echo ">> installing dependencies"
-	glide install
+deps: $(DEP_BIN) Gopkg.toml
+	@echo ">> installing application dependencies"
+	$(DEP_BIN) ensure
 
 build: linux_amd64/prom-nginx-exporter
 
@@ -19,15 +20,15 @@ build-darwin: darwin_amd64/prom-nginx-exporter
 
 linux_amd64/prom-nginx-exporter: deps
 	@echo ">> building $@ with version $(GIT_SUMMARY)"
-	@GOOS="linux" GOARCH="amd64" go build -ldflags="-X 'main.gitSummary=$(GIT_SUMMARY)'" -o $@ main.go
+	@GOOS="linux" GOARCH="amd64" $(GO) build -ldflags="-X 'main.gitSummary=$(GIT_SUMMARY)'" -o $@ main.go
 
 darwin_amd64/prom-nginx-exporter: deps
 	@echo ">> building $@ with version $(GIT_SUMMARY)"
-	@GOOS="darwin" GOARCH="amd64" go build -ldflags="-X 'main.gitSummary=$(GIT_SUMMARY)'" -o $@ main.go
+	@GOOS="darwin" GOARCH="amd64" $(GO) build -ldflags="-X 'main.gitSummary=$(GIT_SUMMARY)'" -o $@ main.go
 
 test:
 	@echo ">> making tests"
-	@go test $$(glide nv)
+	@$(GO) test $$($(GO) list ./... | grep -v /vendor/)
 
 docker: Dockerfile
 	@echo ">> building docker image prom-nginx-exporter:$(GIT_SUMMARY)"
@@ -43,7 +44,7 @@ clean:
 
 fmt:
 	@echo ">> formatting source"
-	@find . -type f -iname '*.go' -not -path './vendor/*' -not -iname '*pb.go' | xargs -L 1 go fmt
+	@find . -type f -iname '*.go' -not -path './vendor/*' -not -iname '*pb.go' | xargs -L 1 $(GO) fmt
 
 imports:
 	@echo ">> fixing source imports"
@@ -52,3 +53,7 @@ imports:
 lint:
 	@echo ">> linting source"
 	@find . -type f -iname '*.go' -not -path './vendor/*' -not -iname '*pb.go' | xargs -L 1 golint
+
+$(DEP_BIN):
+	@echo ">> installing package manager(dep)"
+	@$(GO) get -u github.com/golang/dep/cmd/dep

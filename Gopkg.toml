@@ -1,0 +1,15 @@
+[[constraint]]
+  name = "github.com/monitoring-tools/prom-nginx-exporter"
+  version = "1.0.0"
+
+[[constraint]]
+  name = "github.com/prometheus/client_golang"
+  version = "0.8.0"
+
+[[constraint]]
+  name = "github.com/prometheus/common"
+  revision = "13ba4ddd0caa9c28ca7b7bffe1dfa9ed8d5ef207"
+
+[[constraint]]
+  name = "gopkg.in/check.v1"
+  revision = "20d25e2804050c1cd24a7eea1e7a6447dd0e74ec"
