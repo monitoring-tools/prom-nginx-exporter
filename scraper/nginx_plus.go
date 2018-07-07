@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"strconv"
 
 	"github.com/monitoring-tools/prom-nginx-exporter/metric"
 )
@@ -141,9 +140,6 @@ func (scr *NginxPlusScraper) scrapeUpstream(status *Status, metrics chan<- metri
 				peerLabels[k] = v
 			}
 			peerLabels["serverAddress"] = peer.Server
-			if peer.ID != nil {
-				peerLabels["id"] = strconv.Itoa(*peer.ID)
-			}
 
 			metrics <- metric.NewMetric("upstream_peer_backup", peer.Backup, peerLabels)
 			metrics <- metric.NewMetric("upstream_peer_weight", peer.Weight, peerLabels)

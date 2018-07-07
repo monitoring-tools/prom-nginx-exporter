@@ -202,7 +202,7 @@ func codeLabels(labels map[string]string, code string) map[string]string {
 }
 
 func (s NginxPlusScraperSuite) TestScrape_Success(c *C) {
-	nginxPlusScraper := scraper.NewNginxPlusScraper()
+	nginxPlusScraper := scraper.NewNginxPlusScraper([]string{})
 	reader := strings.NewReader(validNginxPlusStats)
 
 	metrics := make(chan metric.Metric, 108)
@@ -385,7 +385,6 @@ func (s NginxPlusScraperSuite) TestScrape_Success(c *C) {
 	for l, v := range upstreamLabels {
 		peerLabels[l] = v
 	}
-	peerLabels["id"] = "0"
 	peerLabels["serverAddress"] = "1.2.3.123:80"
 
 	m = <-metrics
@@ -701,7 +700,6 @@ func (s NginxPlusScraperSuite) TestScrape_Success(c *C) {
 		streamPeerLabels[l] = v
 	}
 	streamPeerLabels["serverAddress"] = "5.4.3.2:2345"
-	streamPeerLabels["id"] = "1"
 
 	m = <-metrics
 	c.Assert(m.Name, Equals, "stream_upstream_peer_backup", Commentf("incorrect metrics name of 'stream_upstream_peer_backup' field"))
@@ -800,7 +798,7 @@ func (s NginxPlusScraperSuite) TestScrape_Success(c *C) {
 }
 
 func (s NginxPlusScraperSuite) TestScrape_Fail(c *C) {
-	nginxPlusScraper := scraper.NewNginxPlusScraper()
+	nginxPlusScraper := scraper.NewNginxPlusScraper([]string{})
 	reader := strings.NewReader(`{"version":"invalid json"}`)
 
 	metrics := make(chan metric.Metric, 96)
@@ -808,5 +806,5 @@ func (s NginxPlusScraperSuite) TestScrape_Fail(c *C) {
 
 	err := nginxPlusScraper.Scrape(reader, metrics, labels)
 	c.Assert(err, NotNil, Commentf("error should be occurred"))
-	c.Assert(err.Error(), Equals, "Error while decoding JSON response", Commentf("incorrect error massage of parsing json"))
+	c.Assert(err.Error(), Equals, "error while decoding JSON response: json: cannot unmarshal string into Go struct field Status.version of type int", Commentf("incorrect error massage of parsing json"))
 }
