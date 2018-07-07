@@ -11,11 +11,13 @@ import (
 )
 
 // NginxPlusScraper is scraper for getting nginx plus metrics
-type NginxPlusScraper struct{}
+type NginxPlusScraper struct {
+	excludeUpstreamAddresses []string
+}
 
 // NewNginxPlusScraper crates new nginx plus stats scraper
-func NewNginxPlusScraper() NginxPlusScraper {
-	return NginxPlusScraper{}
+func NewNginxPlusScraper(excludeUpstreamAddresses []string) NginxPlusScraper {
+	return NginxPlusScraper{excludeUpstreamAddresses: excludeUpstreamAddresses}
 }
 
 // Scrape scrapes stats from nginx plus module
@@ -120,6 +122,20 @@ func (scr *NginxPlusScraper) scrapeUpstream(status *Status, metrics chan<- metri
 		}
 
 		for _, peer := range upstream.Peers {
+			if len(scr.excludeUpstreamAddresses) != 0 {
+				exclude := false
+				for _, address := range scr.excludeUpstreamAddresses {
+					if address == peer.Server {
+						exclude = true
+						break
+					}
+				}
+
+				if exclude {
+					continue
+				}
+			}
+
 			peerLabels := make(map[string]string)
 			for k, v := range upstreamLabels {
 				peerLabels[k] = v
@@ -345,7 +361,7 @@ type ServerZones map[string]struct {
 	// added in version 2
 	Processing int   `json:"processing"`
 	Requests   int64 `json:"requests"`
-	Responses  struct {
+	Responses struct {
 		Responses1xx int64 `json:"1xx"`
 		Responses2xx int64 `json:"2xx"`
 		Responses3xx int64 `json:"3xx"`
@@ -379,10 +395,10 @@ type Upstreams map[string]struct {
 			Responses5xx int64 `json:"5xx"`
 			Total        int64 `json:"total"`
 		} `json:"responses"`
-		Sent         int64 `json:"sent"`
-		Received     int64 `json:"received"`
-		Fails        int64 `json:"fails"`
-		Unavail      int64 `json:"unavail"`
+		Sent     int64 `json:"sent"`
+		Received int64 `json:"received"`
+		Fails    int64 `json:"fails"`
+		Unavail  int64 `json:"unavail"`
 		HealthChecks struct {
 			Checks     int64 `json:"checks"`
 			Fails      int64 `json:"fails"`
@@ -397,7 +413,7 @@ type Upstreams map[string]struct {
 	} `json:"peers"`
 	Keepalive int `json:"keepalive"`
 	Zombies   int `json:"zombies"` // added in version 6
-	Queue     *struct {
+	Queue *struct {
 		// added in version 6
 		Size      int   `json:"size"`
 		MaxSize   int   `json:"max_size"`
@@ -413,7 +429,7 @@ type Caches map[string]struct {
 	Size    int64 `json:"size"`
 	MaxSize int64 `json:"max_size"`
 	Cold    bool  `json:"cold"`
-	Hit     struct {
+	Hit struct {
 		Responses int64 `json:"responses"`
 		Bytes     int64 `json:"bytes"`
 	} `json:"hit"`
@@ -458,7 +474,7 @@ type Stream struct {
 	ServerZones map[string]struct {
 		Processing  int `json:"processing"`
 		Connections int `json:"connections"`
-		Sessions    *struct {
+		Sessions *struct {
 			Total       int64 `json:"total"`
 			Sessions1xx int64 `json:"1xx"`
 			Sessions2xx int64 `json:"2xx"`
@@ -486,7 +502,7 @@ type Stream struct {
 			Received      int64  `json:"received"`
 			Fails         int64  `json:"fails"`
 			Unavail       int64  `json:"unavail"`
-			HealthChecks  struct {
+			HealthChecks struct {
 				Checks     int64 `json:"checks"`
 				Fails      int64 `json:"fails"`
 				Unhealthy  int64 `json:"unhealthy"`
