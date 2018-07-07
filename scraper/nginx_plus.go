@@ -24,7 +24,7 @@ func (scr *NginxPlusScraper) Scrape(body io.Reader, metrics chan<- metric.Metric
 
 	status := &Status{}
 	if err := dec.Decode(status); err != nil {
-		return fmt.Errorf("Error while decoding JSON response")
+		return fmt.Errorf("error while decoding JSON response: %s", err)
 	}
 
 	scr.scrapeProcesses(status, metrics, labels)
@@ -245,7 +245,6 @@ func (scr *NginxPlusScraper) scrapeStream(status *Status, metrics chan<- metric.
 				peerLables[k] = v
 			}
 			peerLables["serverAddress"] = peer.Server
-			peerLables["id"] = strconv.Itoa(peer.ID)
 
 			metrics <- metric.NewMetric("stream_upstream_peer_backup", peer.Backup, peerLables)
 			metrics <- metric.NewMetric("stream_upstream_peer_weight", peer.Weight, peerLables)
