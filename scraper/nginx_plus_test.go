@@ -185,6 +185,36 @@ var validNginxPlusStats = `
                     }
                 ],
                 "zombies": 0
+            },
+			"upstream.02": {
+                "peers": [
+                    {
+                        "id": 2,
+                        "server": "10.20.30.40:5566",
+                        "backup": true,
+                        "weight": 1,
+                        "state": "up",
+                        "active": 100,
+                        "connections": 120,
+                        "sent": 130,
+                        "received": 23,
+                        "fails": 0,
+                        "unavail": 1,
+                        "downtime": 2,
+                        "downstart": 3,
+                        "selected": 4,
+                        "health_checks": {
+                            "checks": 4005,
+                            "fails": 40,
+                            "unhealthy": 100,
+                            "last_passed": true
+                        },
+                        "connect_time": 553,
+                        "first_byte_time": 554,
+                        "response_time": 555
+                    }
+                ],
+                "zombies": 10
             }
         }
     }
@@ -202,10 +232,10 @@ func codeLabels(labels map[string]string, code string) map[string]string {
 }
 
 func (s NginxPlusScraperSuite) TestScrape_Success(c *C) {
-	nginxPlusScraper := scraper.NewNginxPlusScraper([]string{})
+	nginxPlusScraper := scraper.NewNginxPlusScraper([]string{"10.20.30.40:5566"})
 	reader := strings.NewReader(validNginxPlusStats)
 
-	metrics := make(chan metric.Metric, 108)
+	metrics := make(chan metric.Metric, 109)
 	labels := map[string]string{
 		"host": "zone.a_80",
 		"port": "8080",
@@ -688,9 +718,19 @@ func (s NginxPlusScraperSuite) TestScrape_Success(c *C) {
 	for l, v := range labels {
 		streamUpstreamLabels[l] = v
 	}
-	streamUpstreamLabels["upstream"] = "upstream.01"
 
 	m = <-metrics
+
+	// if the 'upstream.02' upstream is the first in upstreams loop
+	if m.Value == 10 {
+		streamUpstreamLabels["upstream"] = "upstream.02"
+		c.Assert(m.Name, Equals, "stream_upstream_zombies", Commentf("incorrect metrics name of 'stream_upstream_zombies' field"))
+		c.Assert(m.Labels, DeepEquals, streamUpstreamLabels, Commentf("incorrect set of labels"))
+		m = <-metrics
+	}
+
+	streamUpstreamLabels["upstream"] = "upstream.01"
+
 	c.Assert(m.Name, Equals, "stream_upstream_zombies", Commentf("incorrect metrics name of 'stream_upstream_zombies' field"))
 	c.Assert(m.Value, Equals, 0, Commentf("incorrect value of metric 'stream_upstream_zombies'"))
 	c.Assert(m.Labels, DeepEquals, streamUpstreamLabels, Commentf("incorrect set of labels"))
@@ -795,6 +835,15 @@ func (s NginxPlusScraperSuite) TestScrape_Success(c *C) {
 	c.Assert(m.Name, Equals, "stream_upstream_peer_response_time", Commentf("incorrect metrics name of 'stream_upstream_peer_response_time' field"))
 	c.Assert(m.Value, Equals, 995, Commentf("incorrect value of metric 'stream_upstream_peer_response_time'"))
 	c.Assert(m.Labels, DeepEquals, streamPeerLabels, Commentf("incorrect set of labels"))
+
+	// if the 'upstream.02' upstream is the second in the upstreams loop
+	if len(metrics) == 1 {
+		m = <- metrics
+		streamUpstreamLabels["upstream"] = "upstream.02"
+		c.Assert(m.Name, Equals, "stream_upstream_zombies", Commentf("incorrect metrics name of 'stream_upstream_zombies' field"))
+		c.Assert(m.Value, Equals, 10, Commentf("incorrect value of metric 'stream_upstream_zombies'"))
+		c.Assert(m.Labels, DeepEquals, streamUpstreamLabels, Commentf("incorrect set of labels"))
+	}
 }
 
 func (s NginxPlusScraperSuite) TestScrape_Fail(c *C) {
