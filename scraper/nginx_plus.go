@@ -252,6 +252,20 @@ func (scr *NginxPlusScraper) scrapeStream(status *Status, metrics chan<- metric.
 		metrics <- metric.NewMetric("stream_upstream_zombies", upstream.Zombies, upstreamLabels)
 
 		for _, peer := range upstream.Peers {
+			if len(scr.excludeUpstreamAddresses) != 0 {
+				exclude := false
+				for _, address := range scr.excludeUpstreamAddresses {
+					if address == peer.Server {
+						exclude = true
+						break
+					}
+				}
+
+				if exclude {
+					continue
+				}
+			}
+
 			peerLables := map[string]string{}
 			for k, v := range upstreamLabels {
 				peerLables[k] = v
