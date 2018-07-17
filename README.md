@@ -69,6 +69,7 @@ metrics-path          |    no    |    no    | /metrics       | Path under which 
 namespace             |    no    |    no    | nginx          | The namespace of metrics.
 nginx-stats-urls      |    yes   |    yes   | -              | An array of Nginx URL to gather stats.
 nginx-plus-stats-urls |    yes   |    yes   | -              | An array of Nginx Plus URL to gather stats.
+exclude-upstream-peers|    no    |    yes   | -              | An array of peers addresses to exclude in the gathering of metrics.
 
 ## What's exported?
 It exports statistics of standart Nginx module (https://nginx.org/en/docs/http/ngx_http_stub_status_module.html) and Nginx Plus module (http://nginx.org/en/docs/http/ngx_http_status_module.html).

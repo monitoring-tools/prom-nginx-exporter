@@ -11,12 +11,12 @@ import (
 
 // NginxPlusScraper is scraper for getting nginx plus metrics
 type NginxPlusScraper struct {
-	excludeUpstreamAddresses []string
+	excludeUpstreamPeers []string
 }
 
 // NewNginxPlusScraper crates new nginx plus stats scraper
-func NewNginxPlusScraper(excludeUpstreamAddresses []string) NginxPlusScraper {
-	return NginxPlusScraper{excludeUpstreamAddresses: excludeUpstreamAddresses}
+func NewNginxPlusScraper(excludeUpstreamPeers []string) NginxPlusScraper {
+	return NginxPlusScraper{excludeUpstreamPeers: excludeUpstreamPeers}
 }
 
 // Scrape scrapes stats from nginx plus module
@@ -121,9 +121,9 @@ func (scr *NginxPlusScraper) scrapeUpstream(status *Status, metrics chan<- metri
 		}
 
 		for _, peer := range upstream.Peers {
-			if len(scr.excludeUpstreamAddresses) != 0 {
+			if len(scr.excludeUpstreamPeers) != 0 {
 				exclude := false
-				for _, address := range scr.excludeUpstreamAddresses {
+				for _, address := range scr.excludeUpstreamPeers {
 					if address == peer.Server {
 						exclude = true
 						break
@@ -252,9 +252,9 @@ func (scr *NginxPlusScraper) scrapeStream(status *Status, metrics chan<- metric.
 		metrics <- metric.NewMetric("stream_upstream_zombies", upstream.Zombies, upstreamLabels)
 
 		for _, peer := range upstream.Peers {
-			if len(scr.excludeUpstreamAddresses) != 0 {
+			if len(scr.excludeUpstreamPeers) != 0 {
 				exclude := false
-				for _, address := range scr.excludeUpstreamAddresses {
+				for _, address := range scr.excludeUpstreamPeers {
 					if address == peer.Server {
 						exclude = true
 						break
