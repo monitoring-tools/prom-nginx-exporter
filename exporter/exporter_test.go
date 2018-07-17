@@ -208,7 +208,7 @@ func (s NginxExporterSuite) TestNginxStatsScrape_Success(c *C) {
 	exp := exporter.NewNginxPlusExporter(
 		client,
 		scraper.NewNginxScraper(),
-		scraper.NewNginxPlusScraper(),
+		scraper.NewNginxPlusScraper(map[string]bool{}),
 		"nginx_test",
 		[]string{"http://localhost:9000"},
 		[]string{},
@@ -263,7 +263,7 @@ func (s NginxExporterSuite) TestNginxPlusStatsScrape_Success(c *C) {
 	exp := exporter.NewNginxPlusExporter(
 		client,
 		scraper.NewNginxScraper(),
-		scraper.NewNginxPlusScraper(),
+		scraper.NewNginxPlusScraper(map[string]bool{}),
 		"nginx_test",
 		[]string{},
 		[]string{"http://localhost:9000"},
@@ -407,7 +407,7 @@ func (s NginxExporterSuite) TestInvalidNginxStatsUrl_Fail(c *C) {
 	exp := exporter.NewNginxPlusExporter(
 		client,
 		scraper.NewNginxScraper(),
-		scraper.NewNginxPlusScraper(),
+		scraper.NewNginxPlusScraper(map[string]bool{}),
 		"nginx_test",
 		[]string{"invalid nginx stats url"},
 		[]string{},

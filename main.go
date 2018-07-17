@@ -38,19 +38,20 @@ func main() {
 		log.Fatalln(err)
 	}
 
-	registerExporter(config.Namespace, config.NginxUrls, config.NginxPlusUrls)
+	registerExporter(config.Namespace, config.NginxUrls, config.NginxPlusUrls, config.ExcludeUpstreamPeers)
 	run(config.ListenAddress, config.MetricsPath)
 }
 
 // parseFlag parses config parameters
 func parseFlag() (*common.Config, error) {
 	var (
-		listenAddress *string
-		metricsPath   *string
-		namespace     *string
-		version       *bool
-		nginxUrls     common.ArrFlags
-		nginxPlusUrls common.ArrFlags
+		listenAddress        *string
+		metricsPath          *string
+		namespace            *string
+		version              *bool
+		nginxUrls            common.ArrFlags
+		nginxPlusUrls        common.ArrFlags
+		excludeUpstreamPeers common.ArrFlags
 	)
 
 	listenAddress = flag.String("listen-address", ":9001", "Address on which to expose metrics and web interface.")
@@ -59,6 +60,7 @@ func parseFlag() (*common.Config, error) {
 	version = flag.Bool("version", false, "The version of the exporter.")
 	flag.Var(&nginxUrls, "nginx-stats-urls", "An array of Nginx status URLs to gather stats.")
 	flag.Var(&nginxPlusUrls, "nginx-plus-stats-urls", "An array of Nginx Plus status URLs to gather stats.")
+	flag.Var(&excludeUpstreamPeers, "exclude-upstream-peers", "An array of upstream addresses that need to be excluded in gathering stats.")
 
 	flag.Parse()
 
@@ -71,11 +73,16 @@ func parseFlag() (*common.Config, error) {
 		return nil, errors.New("no nginx or nginx plus stats url specified")
 	}
 
-	return common.NewConfig(*listenAddress, *metricsPath, *namespace, nginxUrls, nginxPlusUrls), nil
+	peers := make(map[string]bool)
+	for _, peer := range excludeUpstreamPeers {
+		peers[peer] = true
+	}
+
+	return common.NewConfig(*listenAddress, *metricsPath, *namespace, nginxUrls, nginxPlusUrls, peers), nil
 }
 
 // registerExporter registers custom nginx metrics exporter
-func registerExporter(namespace string, nginxUrls []string, nginxPlusUrls []string) {
+func registerExporter(namespace string, nginxUrls []string, nginxPlusUrls []string, excludeUpstreamPeers map[string]bool) {
 	var (
 		transport = &http.Transport{ResponseHeaderTimeout: time.Duration(3 * time.Second)}
 		client    = &http.Client{Transport: transport, Timeout: time.Duration(4 * time.Second)}
@@ -84,7 +91,7 @@ func registerExporter(namespace string, nginxUrls []string, nginxPlusUrls []stri
 	prometheus.MustRegister(exporter.NewNginxPlusExporter(
 		client,
 		scraper.NewNginxScraper(),
-		scraper.NewNginxPlusScraper(),
+		scraper.NewNginxPlusScraper(excludeUpstreamPeers),
 		namespace,
 		nginxUrls,
 		nginxPlusUrls,

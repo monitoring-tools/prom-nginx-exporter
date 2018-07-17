@@ -5,17 +5,18 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"strconv"
 
 	"github.com/monitoring-tools/prom-nginx-exporter/metric"
 )
 
 // NginxPlusScraper is scraper for getting nginx plus metrics
-type NginxPlusScraper struct{}
+type NginxPlusScraper struct {
+	excludeUpstreamPeers map[string]bool
+}
 
 // NewNginxPlusScraper crates new nginx plus stats scraper
-func NewNginxPlusScraper() NginxPlusScraper {
-	return NginxPlusScraper{}
+func NewNginxPlusScraper(excludeUpstreamPeers map[string]bool) NginxPlusScraper {
+	return NginxPlusScraper{excludeUpstreamPeers: excludeUpstreamPeers}
 }
 
 // Scrape scrapes stats from nginx plus module
@@ -24,7 +25,7 @@ func (scr *NginxPlusScraper) Scrape(body io.Reader, metrics chan<- metric.Metric
 
 	status := &Status{}
 	if err := dec.Decode(status); err != nil {
-		return fmt.Errorf("Error while decoding JSON response")
+		return fmt.Errorf("error while decoding JSON response: %s", err)
 	}
 
 	scr.scrapeProcesses(status, metrics, labels)
@@ -120,14 +121,15 @@ func (scr *NginxPlusScraper) scrapeUpstream(status *Status, metrics chan<- metri
 		}
 
 		for _, peer := range upstream.Peers {
+			if ok := scr.excludeUpstreamPeers[peer.Server]; ok {
+				continue
+			}
+
 			peerLabels := make(map[string]string)
 			for k, v := range upstreamLabels {
 				peerLabels[k] = v
 			}
 			peerLabels["serverAddress"] = peer.Server
-			if peer.ID != nil {
-				peerLabels["id"] = strconv.Itoa(*peer.ID)
-			}
 
 			metrics <- metric.NewMetric("upstream_peer_backup", peer.Backup, peerLabels)
 			metrics <- metric.NewMetric("upstream_peer_weight", peer.Weight, peerLabels)
@@ -240,12 +242,15 @@ func (scr *NginxPlusScraper) scrapeStream(status *Status, metrics chan<- metric.
 		metrics <- metric.NewMetric("stream_upstream_zombies", upstream.Zombies, upstreamLabels)
 
 		for _, peer := range upstream.Peers {
+			if ok := scr.excludeUpstreamPeers[peer.Server]; ok {
+				continue
+			}
+
 			peerLables := map[string]string{}
 			for k, v := range upstreamLabels {
 				peerLables[k] = v
 			}
 			peerLables["serverAddress"] = peer.Server
-			peerLables["id"] = strconv.Itoa(peer.ID)
 
 			metrics <- metric.NewMetric("stream_upstream_peer_backup", peer.Backup, peerLables)
 			metrics <- metric.NewMetric("stream_upstream_peer_weight", peer.Weight, peerLables)
@@ -346,7 +351,7 @@ type ServerZones map[string]struct {
 	// added in version 2
 	Processing int   `json:"processing"`
 	Requests   int64 `json:"requests"`
-	Responses  struct {
+	Responses struct {
 		Responses1xx int64 `json:"1xx"`
 		Responses2xx int64 `json:"2xx"`
 		Responses3xx int64 `json:"3xx"`
@@ -380,10 +385,10 @@ type Upstreams map[string]struct {
 			Responses5xx int64 `json:"5xx"`
 			Total        int64 `json:"total"`
 		} `json:"responses"`
-		Sent         int64 `json:"sent"`
-		Received     int64 `json:"received"`
-		Fails        int64 `json:"fails"`
-		Unavail      int64 `json:"unavail"`
+		Sent     int64 `json:"sent"`
+		Received int64 `json:"received"`
+		Fails    int64 `json:"fails"`
+		Unavail  int64 `json:"unavail"`
 		HealthChecks struct {
 			Checks     int64 `json:"checks"`
 			Fails      int64 `json:"fails"`
@@ -398,7 +403,7 @@ type Upstreams map[string]struct {
 	} `json:"peers"`
 	Keepalive int `json:"keepalive"`
 	Zombies   int `json:"zombies"` // added in version 6
-	Queue     *struct {
+	Queue *struct {
 		// added in version 6
 		Size      int   `json:"size"`
 		MaxSize   int   `json:"max_size"`
@@ -414,7 +419,7 @@ type Caches map[string]struct {
 	Size    int64 `json:"size"`
 	MaxSize int64 `json:"max_size"`
 	Cold    bool  `json:"cold"`
-	Hit     struct {
+	Hit struct {
 		Responses int64 `json:"responses"`
 		Bytes     int64 `json:"bytes"`
 	} `json:"hit"`
@@ -459,7 +464,7 @@ type Stream struct {
 	ServerZones map[string]struct {
 		Processing  int `json:"processing"`
 		Connections int `json:"connections"`
-		Sessions    *struct {
+		Sessions *struct {
 			Total       int64 `json:"total"`
 			Sessions1xx int64 `json:"1xx"`
 			Sessions2xx int64 `json:"2xx"`
@@ -487,7 +492,7 @@ type Stream struct {
 			Received      int64  `json:"received"`
 			Fails         int64  `json:"fails"`
 			Unavail       int64  `json:"unavail"`
-			HealthChecks  struct {
+			HealthChecks struct {
 				Checks     int64 `json:"checks"`
 				Fails      int64 `json:"fails"`
 				Unhealthy  int64 `json:"unhealthy"`
