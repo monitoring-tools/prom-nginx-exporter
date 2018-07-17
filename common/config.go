@@ -7,7 +7,7 @@ type Config struct {
 	Namespace            string
 	NginxUrls            []string
 	NginxPlusUrls        []string
-	ExcludeUpstreamPeers []string
+	ExcludeUpstreamPeers map[string]bool
 }
 
 // NewConfig creates new application config.
@@ -17,7 +17,7 @@ func NewConfig(
 	namespace string,
 	nginxUrls []string,
 	nginxPlusUrls []string,
-	excludeUpstreamPeers []string,
+	excludeUpstreamPeers map[string]bool,
 ) *Config {
 	return &Config{
 		ListenAddress:        listenAddress,

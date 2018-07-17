@@ -73,11 +73,16 @@ func parseFlag() (*common.Config, error) {
 		return nil, errors.New("no nginx or nginx plus stats url specified")
 	}
 
-	return common.NewConfig(*listenAddress, *metricsPath, *namespace, nginxUrls, nginxPlusUrls, excludeUpstreamPeers), nil
+	peers := make(map[string]bool)
+	for _, peer := range excludeUpstreamPeers {
+		peers[peer] = true
+	}
+
+	return common.NewConfig(*listenAddress, *metricsPath, *namespace, nginxUrls, nginxPlusUrls, peers), nil
 }
 
 // registerExporter registers custom nginx metrics exporter
-func registerExporter(namespace string, nginxUrls []string, nginxPlusUrls []string, excludeUpstreamPeers []string) {
+func registerExporter(namespace string, nginxUrls []string, nginxPlusUrls []string, excludeUpstreamPeers map[string]bool) {
 	var (
 		transport = &http.Transport{ResponseHeaderTimeout: time.Duration(3 * time.Second)}
 		client    = &http.Client{Transport: transport, Timeout: time.Duration(4 * time.Second)}

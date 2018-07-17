@@ -232,7 +232,7 @@ func codeLabels(labels map[string]string, code string) map[string]string {
 }
 
 func (s NginxPlusScraperSuite) TestScrape_Success(c *C) {
-	nginxPlusScraper := scraper.NewNginxPlusScraper([]string{"10.20.30.40:5566"})
+	nginxPlusScraper := scraper.NewNginxPlusScraper(map[string]bool{"10.20.30.40:5566": true})
 	reader := strings.NewReader(validNginxPlusStats)
 
 	metrics := make(chan metric.Metric, 109)
@@ -838,7 +838,7 @@ func (s NginxPlusScraperSuite) TestScrape_Success(c *C) {
 
 	// if the 'upstream.02' upstream is the second in the upstreams loop
 	if len(metrics) == 1 {
-		m = <- metrics
+		m = <-metrics
 		streamUpstreamLabels["upstream"] = "upstream.02"
 		c.Assert(m.Name, Equals, "stream_upstream_zombies", Commentf("incorrect metrics name of 'stream_upstream_zombies' field"))
 		c.Assert(m.Value, Equals, 10, Commentf("incorrect value of metric 'stream_upstream_zombies'"))
@@ -847,7 +847,7 @@ func (s NginxPlusScraperSuite) TestScrape_Success(c *C) {
 }
 
 func (s NginxPlusScraperSuite) TestScrape_Fail(c *C) {
-	nginxPlusScraper := scraper.NewNginxPlusScraper([]string{})
+	nginxPlusScraper := scraper.NewNginxPlusScraper(map[string]bool{})
 	reader := strings.NewReader(`{"version":"invalid json"}`)
 
 	metrics := make(chan metric.Metric, 96)
