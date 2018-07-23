@@ -12,7 +12,7 @@ For linux:
 $ make build-linux
 >> installing application dependencies
  ...
-$ ./linux_amd64/nginx-plus-exporter listen-address="localhost:9005" --metrics-path="/metrics" --namespace="nginxplus" --nginx-stats-urls="localhost:9002/status" --nginx-stats-urls="localhost:9003/status" --nginx-plus-stats-urls="localhost:9004/status"
+$ ./linux_amd64/nginx-plus-exporter --listen-address="localhost:9005" --metrics-path="/metrics" --namespace="nginxplus" --nginx-stats-urls="localhost:9002/status" --nginx-stats-urls="localhost:9003/status" --nginx-plus-stats-urls="localhost:9004/status"
 ```
 
 For darwin:
@@ -21,7 +21,7 @@ For darwin:
 $ make build-darwin
 >> installing application dependencies
  ...
-$ ./darwin_amd64/nginx-plus-exporter listen-address="localhost:9005" --metrics-path="/metrics" --namespace="nginxplus" --nginx-stats-urls="localhost:9002/status" --nginx-stats-urls="localhost:9003/status" --nginx-plus-stats-urls="localhost:9004/status"
+$ ./darwin_amd64/nginx-plus-exporter --listen-address="localhost:9005" --metrics-path="/metrics" --namespace="nginxplus" --nginx-stats-urls="localhost:9002/status" --nginx-stats-urls="localhost:9003/status" --nginx-plus-stats-urls="localhost:9004/status"
 ```
 
 ### Other useful make commands:
