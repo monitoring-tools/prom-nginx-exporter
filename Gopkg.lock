@@ -24,17 +24,6 @@
   revision = "c12348ce28de40eed0136aa2b644d0ee0650e56c"
 
 [[projects]]
-  name = "github.com/monitoring-tools/prom-nginx-exporter"
-  packages = [
-    "common",
-    "exporter",
-    "metric",
-    "scraper"
-  ]
-  revision = "bea72f0ed5758a83f92aecf6fe18447f8f101b0d"
-  version = "1.0.0"
-
-[[projects]]
   name = "github.com/prometheus/client_golang"
   packages = [
     "prometheus",
@@ -84,6 +73,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "1a5775ae20a231f48b51aaeb1166cdc65a4eabe6a732dbb9f944da4b34d98311"
+  inputs-digest = "0f66c13ab27e197b3251ad27e59f52a8e3468ab67282d2d50888c4f8bfe94bb5"
   solver-name = "gps-cdcl"
   solver-version = 1

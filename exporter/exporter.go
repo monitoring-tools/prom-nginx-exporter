@@ -34,7 +34,6 @@ type nginxPlusExporter struct {
 
 	duration     prometheus.Summary
 	totalScrapes prometheus.Counter
-	metrics      map[string]*prometheus.GaugeVec
 
 	sync.RWMutex
 }
@@ -70,16 +69,11 @@ func NewNginxPlusExporter(
 		nginxPlusScraper: nginxPlusScraper,
 		duration:         duration,
 		totalScrapes:     totalScrapes,
-		metrics:          map[string]*prometheus.GaugeVec{},
 	}
 }
 
 // Describe describes nginx and nginx plus metrics
 func (exp *nginxPlusExporter) Describe(ch chan<- *prometheus.Desc) {
-	for _, item := range exp.metrics {
-		item.Describe(ch)
-	}
-
 	ch <- exp.duration.Desc()
 	ch <- exp.totalScrapes.Desc()
 }
@@ -89,8 +83,7 @@ func (exp *nginxPlusExporter) Collect(ch chan<- prometheus.Metric) {
 	exp.Lock()
 	defer exp.Unlock()
 
-	exp.save(exp.scrape())
-	exp.expose(ch)
+	exp.expose(ch, exp.collect(exp.scrape()))
 }
 
 // scrape scrapes nginx or nginx plus stats for the passed urls
@@ -112,42 +105,45 @@ func (exp *nginxPlusExporter) scrape() chan metric.Metric {
 	return metrics
 }
 
-// save saves metrics in the internal struct
-func (exp *nginxPlusExporter) save(metrics <-chan metric.Metric) {
-	for item := range metrics {
-		metricKey := exp.namespace + "_" + item.Name
-
-		if _, ok := exp.metrics[metricKey]; !ok {
-			gaugeOpt := prometheus.GaugeOpts{
-				Namespace: exp.namespace,
-				Name:      item.Name,
-			}
-
-			labelNames := make([]string, 0, len(item.Labels))
-			for labelName := range item.Labels {
-				labelNames = append(labelNames, labelName)
-			}
-
-			exp.metrics[metricKey] = prometheus.NewGaugeVec(gaugeOpt, labelNames)
-		}
-
-		if val, err := common.ConvertValueToFloat64(item.Value); err != nil {
-			log.Errorf("Convert error for metric '%s': %s", item.Name, err)
-			continue
-		} else {
-			exp.metrics[metricKey].With(item.Labels).Set(val)
-		}
-	}
-}
-
 // expose returns metrics to base metric channel
-func (exp *nginxPlusExporter) expose(ch chan<- prometheus.Metric) {
+func (exp *nginxPlusExporter) expose(ch chan<- prometheus.Metric, metrics map[string]*prometheus.GaugeVec) {
+
 	ch <- exp.duration
 	ch <- exp.totalScrapes
 
-	for _, m := range exp.metrics {
+	for _, m := range metrics {
 		m.Collect(ch)
 	}
+}
+
+// collect collects all metrics to map
+func (exp *nginxPlusExporter) collect(metrics <-chan metric.Metric) map[string]*prometheus.GaugeVec {
+	m := map[string]*prometheus.GaugeVec{}
+
+	for item := range metrics {
+		metricKey := exp.namespace + "_" + item.Name
+
+		gaugeOpt := prometheus.GaugeOpts{
+			Namespace: exp.namespace,
+			Name:      item.Name,
+		}
+
+		labelNames := make([]string, 0, len(item.Labels))
+		for labelName := range item.Labels {
+			labelNames = append(labelNames, labelName)
+		}
+
+		m[metricKey] = prometheus.NewGaugeVec(gaugeOpt, labelNames)
+
+		if val, err := common.ConvertValueToFloat64(item.Value); err != nil {
+			log.Errorf("convert error for metric '%s': %s", item.Name, err)
+			continue
+		} else {
+			m[metricKey].With(item.Labels).Set(val)
+		}
+	}
+
+	return m
 }
 
 // scrapeModule scrapes stats for module(nginx or nginx plus)
@@ -155,7 +151,7 @@ func (exp *nginxPlusExporter) scrapeModule(module string, urls []string, metrics
 	for _, u := range urls {
 		addr, err := url.Parse(u)
 		if err != nil {
-			log.Fatalf("Unable to parse address '%s': %s", u, err)
+			log.Fatalf("unable to parse address '%s': %s", u, err)
 		}
 
 		labels := map[string]string{
@@ -174,7 +170,7 @@ func (exp *nginxPlusExporter) scrapeModule(module string, urls []string, metrics
 func (exp *nginxPlusExporter) scrapeURL(module string, addr *url.URL, metrics chan<- metric.Metric, labels map[string]string) error {
 	resp, err := exp.client.Get(addr.String())
 	if err != nil {
-		return fmt.Errorf("Error making HTTP request to '%s': %s", addr.String(), err)
+		return fmt.Errorf("error making HTTP request to '%s': %s", addr.String(), err)
 	}
 	defer resp.Body.Close()
 
@@ -187,14 +183,14 @@ func (exp *nginxPlusExporter) scrapeURL(module string, addr *url.URL, metrics ch
 	if module == nginxModule {
 		err = exp.nginxScraper.Scrape(resp.Body, metrics, labels)
 		if err != nil {
-			return fmt.Errorf("Error scraping nginx stats using address '%s': %s", addr.String(), err)
+			return fmt.Errorf("error scraping nginx stats using address '%s': %s", addr.String(), err)
 		}
 
 		return nil
 	} else if module == nginxPlusModule && contentType == "application/json" {
 		err = exp.nginxPlusScraper.Scrape(resp.Body, metrics, labels)
 		if err != nil {
-			return fmt.Errorf("Error scraping nginx plus stats using address '%s': %s", addr.String(), err)
+			return fmt.Errorf("error scraping nginx plus stats using address '%s': %s", addr.String(), err)
 		}
 
 		return nil
